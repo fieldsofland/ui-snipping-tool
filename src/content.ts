@@ -1,5 +1,6 @@
 import { createFigmaConverter, createFontsourceLoader } from '@figit/dom-to-figma';
-import { composeClipboardHtml, encodeFigmaData, toClipboardItem } from '@figit/fig-kiwi';
+import { composeClipboardHtml, encodeFigmaData } from '@figit/fig-kiwi';
+import { writePreparedHtml } from './clipboard';
 import { normalizeFonts, converterStyle, type FontIdentity } from './fonts';
 import { normalizeSvgPaints } from './svg-paints';
 import { normalizeCapture } from './normalize';
@@ -86,6 +87,7 @@ if (!state.__componentGrabber) {
     get('.status').textContent = 'Preparing editable Figma layers…'; draw();
     try {
       if (!navigator.clipboard?.write) throw new Error('Clipboard access requires an HTTPS page or localhost.');
+      await writePreparedHtml(async () => {
       localFaces = 0;
       fontIdentities.clear();
       converter ??= createFigmaConverter({ trace: true,
@@ -109,7 +111,8 @@ if (!state.__componentGrabber) {
       const normalized = normalizeCapture(result, element);
       normalizeFonts(normalized.nodeChanges, fontIdentities);
       const encoded = encodeFigmaData(normalized);
-      await navigator.clipboard.write([toClipboardItem(composeClipboardHtml(encoded.base64))]);
+      return composeClipboardHtml(encoded.base64);
+      });
       copy.textContent = 'Copied';
       get('.status').textContent = localFaces ? 'Ready. Copied using your saved fonts.' : 'Ready. Paste into your Figma canvas.';
     } catch (error) {

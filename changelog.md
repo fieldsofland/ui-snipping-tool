@@ -2,6 +2,8 @@
 
 ## 2026-10-07
 
+- Started clipboard writes immediately on the Copy click using a promised HTML payload, before asynchronous font/image preparation can lose browser activation or focus. Success still waits for the completed write; added ordering and failure regression tests.
+
 - Renamed the extension UI Snipping Tool. Verified existing outer and inset box-shadow conversion with regression coverage for multiple shadows, blur, spread, color alpha, and native clipboard encoding.
 
 - Prepared the public MIT repository with reproducible build instructions and known capture limitations. Kept local session memory and generated files out of version control.
