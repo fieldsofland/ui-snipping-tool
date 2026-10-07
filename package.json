@@ -1,0 +1,21 @@
+{
+  "name": "ui-snipping-tool",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@figit/dom-to-figma": "0.2.4",
+    "@figit/fig-kiwi": "^0.2.0",
+    "colorjs.io": "^0.6.1"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.24",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.0"
+  }
+}

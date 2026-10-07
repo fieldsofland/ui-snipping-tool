@@ -1,0 +1,30 @@
+# Changelog
+
+## 2026-10-07
+
+- Renamed the extension UI Snipping Tool. Verified existing outer and inset box-shadow conversion with regression coverage for multiple shadows, blur, spread, color alpha, and native clipboard encoding.
+
+- Prepared the public MIT repository with reproducible build instructions and known capture limitations. Kept local session memory and generated files out of version control.
+
+- Excluded visually clipped accessibility labels from capture using computed CSS rather than class names. This prevents shadcn's hidden "Drag to reorder" labels from becoming visible Figma text while preserving visible icons and revealed labels.
+
+- Fixed SVG chart conversion to retain gradient-filled area paths and emit native linear gradients with stop opacity. Preserved color alpha in SVG fills/strokes and SVG text fill colors, correcting opaque chart gridlines and bright axis labels. Added color/gradient binary regression tests.
+
+- Added optional installed-font setup and local storage of selected families so capture can use actual font glyphs and metrics instead of CDN fallback glyphs. This requires Chrome font-access consent once. Verified that saved Arial faces paste with visible text and correct price spacing without manual typography changes.
+
+- Corrected Arial style and PostScript identities and Inter style naming in clipboard font references to help Figma match installed faces without manual replacement. Added font metadata and encoding regression tests.
+
+- Added conservative reduction of redundant single-child frame chains, preserving appearance, clipping, padding, semantic boundaries, grouping, placement, and sizing. Added regression coverage for deeply nested wrappers.
+
+- Added capture cleanup based on Matt's Figma before-and-after: removed redundant export wrapper, applied Auto Width or Auto Height to text, added Auto Layout to simple buttons and CSS baseline rows, and replaced generic frame names with semantic names.
+- Added regression tests for layer cleanup and native clipboard encoding.
+
+- Built the initial Chrome extension with shortcut activation, component highlighting, selection locking, parent selection, and an anchored Copy to Figma panel.
+- Integrated an MIT-licensed DOM converter for native editable Figma clipboard output, avoiding a separate Figma plugin.
+- Added build tooling, panel-position tests, a pricing-card fixture, MIT license, and installation instructions.
+
+## 2026-07-22
+
+- Researched existing Chrome extensions and web-to-Figma tools related to component capture.
+- Confirmed that multiple close implementations already exist, especially Figma's official extension, Pluck, and Component Grabber.
+- Documented a possible local-first, open-format direction if the repository continues as a fun side project.
