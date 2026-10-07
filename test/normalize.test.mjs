@@ -122,9 +122,9 @@ test('GitHub single-row grid contents and inline label/count line boxes become c
   assert.equal(grid.stackCounterAlignItems,'CENTER');assert.equal(labelRow.stackCounterAlignItems,'CENTER');
   assert.ok(Math.abs(labelRow.stackSpacing-4)<1e-8);
 });
-test('multi-row grids are not flattened to horizontal Auto Layout',()=>{
+test('single-column grids become vertical rather than horizontal Auto Layout',()=>{
   const grid=layer(3,2),a=layer(4,3),b=layer(5,3);
   a.size=b.size={x:16,y:16};a.transform.m12=0;b.transform.m12=24;
   normalizeLayers([grid,a,b],guid(2),new Map([['0:3',source({display:'grid',normalFlowChildren:true})]]));
-  assert.equal(grid.stackMode,'NONE');
+  assert.equal(grid.stackMode,'VERTICAL');
 });

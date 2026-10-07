@@ -2,6 +2,8 @@
 
 ## 2026-10-07
 
+- Added geometry-based Auto Layout inference for rows, stacks, simple grids, wrapping groups, distributed spacing, fill-width children, intrinsic sizing hints, and absolute overlays. Retained existing layouts and rejected ambiguous geometry. Added layout and native wrapping clipboard tests.
+
 - Corrected button-row detection to include single-row CSS grids used by GitHub and tolerate inline text line-box offsets. Added GitHub-style button regression fixture and kept multi-row grids excluded.
 
 - Added Auto Layout to padded badge spans and simple centered inline icon/label/count rows, including content nested inside buttons. Preserved measured gaps and source height; excluded overlaps, transforms, and explicit CSS positioning.

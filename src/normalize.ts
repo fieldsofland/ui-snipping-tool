@@ -1,7 +1,8 @@
 import type { ConvertResult } from '@figit/dom-to-figma';
+import { inferAutoLayout } from './layout';
 
 type Guid = { sessionID: number; localID: number };
-type Layer = {
+export type Layer = {
   guid: Guid; type: string; name: string; parentIndex?: { guid: Guid; position: string };
   size?: { x: number; y: number }; transform?: { m00: number; m01: number; m02: number; m10: number; m11: number; m12: number };
   fillPaints?: { visible?: boolean; opacity?: number }[]; strokePaints?: { visible?: boolean; opacity?: number }[];
@@ -12,12 +13,15 @@ type Layer = {
   stackPrimarySizing?: string; stackCounterSizing?: string; stackPrimaryAlignItems?: string; stackCounterAlignItems?: string;
   stackChildAlignSelf?: string; stackChildPrimaryGrow?: number; stackPositioning?: string;
   stackHorizontalPadding?: number; stackVerticalPadding?: number; stackPaddingRight?: number; stackPaddingBottom?: number;
+  stackWrap?: string; stackCounterSpacing?: number;
 };
 export type Source = {
   tag: string; id: string; classes: string[]; role: string | null; display: string;
   alignItems: string; flexDirection: string; gap: number; textAlign: string;
   padding: [number, number, number, number]; multiline: boolean; semanticBoundary?: boolean; sizingBoundary?: boolean; clippingBoundary?: boolean;
   normalFlowChildren?: boolean;
+  position?: string; flexGrow?: number; flexWrap?: string; rowGap?: number; justifyContent?: string;
+  intrinsicWidth?: boolean; intrinsicHeight?: boolean;
 };
 const key = (guid: Guid) => `${guid.sessionID}:${guid.localID}`;
 
@@ -58,6 +62,7 @@ export function normalizeLayers(layers: Layer[], rootGuid: Guid, sources: Map<st
     }
     if (node.type !== 'FRAME') continue;
     const direct = children(node.guid);
+    const inferred = inferAutoLayout(node, direct, source, sources);
     const textOnly = direct.length > 0 && direct.every(child => child.type === 'TEXT');
     node.name = layerName(source, textOnly);
     const normalFlow = direct.every(child => child.stackPositioning !== 'ABSOLUTE');
@@ -70,7 +75,7 @@ export function normalizeLayers(layers: Layer[], rootGuid: Guid, sources: Map<st
     const centers = measuredRow ? direct.map(child => child.transform!.m12 + child.size!.y / 2) : [];
     const gaps = measuredRow ? direct.slice(1).map((child, index) => child.transform!.m02 - direct[index].transform!.m02 - direct[index].size!.x) : [];
     const inlineRow = measuredRow && Math.max(...centers) - Math.min(...centers) <= 3 && gaps.every(gap => gap >= 0 && gap <= 32 && Math.abs(gap - gaps[0]) <= .5);
-    if (baselineRow || simpleButton || badge || inlineRow) {
+    if (!inferred && (baselineRow || simpleButton || badge || inlineRow)) {
       node.stackMode = 'HORIZONTAL';
       node.stackPrimarySizing = inlineRow || badge ? 'RESIZE_TO_FIT' : 'FIXED';
       node.stackCounterSizing = inlineRow || badge ? 'FIXED' : 'RESIZE_TO_FIT';
@@ -172,6 +177,9 @@ export function normalizeCapture(result: ConvertResult, root: Element) {
       padding: [number(style.paddingTop) + number(style.borderTopWidth), number(style.paddingRight) + number(style.borderRightWidth), number(style.paddingBottom) + number(style.borderBottomWidth), number(style.paddingLeft) + number(style.borderLeftWidth)],
       multiline,
       normalFlowChildren: [...element.children].every(child => { const childStyle = getComputedStyle(child); return !['absolute', 'fixed'].includes(childStyle.position) && childStyle.transform === 'none'; }),
+      position: style.position, flexGrow: number(style.flexGrow), flexWrap: style.flexWrap, rowGap: number(style.rowGap), justifyContent: style.justifyContent,
+      intrinsicWidth: ['inline', 'inline-block', 'inline-flex', 'inline-grid'].includes(style.display) && !(element as HTMLElement).style?.width,
+      intrinsicHeight: !(element as HTMLElement).style?.height && !(element as HTMLElement).style?.minHeight,
       sizingBoundary: !['0px', 'auto', ''].includes(style.minWidth) || !['0px', 'auto', ''].includes(style.minHeight) || !['none', ''].includes(style.maxWidth) || !['none', ''].includes(style.maxHeight),
       clippingBoundary: [style.overflowX, style.overflowY].some(value => value !== 'visible') || style.clipPath !== 'none',
       semanticBoundary: element.hasAttribute('aria-label') || [element.id, ...element.classList].some(value => /(?:^|[-_])(card|button|dialog|modal|navigation|hero)(?:$|[-_])/i.test(value)),

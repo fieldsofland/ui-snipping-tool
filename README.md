@@ -43,6 +43,8 @@ CSS box shadows become editable Figma drop shadows or inner shadows for `inset` 
 
 ## Development
 
+Auto Layout reconstruction handles rows, vertical stacks, simple grids, wrapping chip groups, space-between spacing, fill-width stack children, and absolute overlays. It measures padding and gaps and retains existing layout. Ambiguous or overlapping compositions stay unchanged. See [the reconstruction rules](docs/auto-layout.md) for coverage and limits.
+
 ```sh
 npm run check
 npm test

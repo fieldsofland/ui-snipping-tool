@@ -17,4 +17,6 @@ The export should produce a useful design structure from rendered geometry. DOM 
 
 Infer layout candidates from geometry and semantic evidence, then predict child bounds under each candidate. Choose a candidate only when its expected bounds closely match the capture. Text line boxes and visible glyph bounds differ, so treat them separately. Record a reason when a group cannot be converted confidently; avoid silently forcing complex compositions into a row.
 
-The current implementation covers simple buttons, baseline text rows, padded badge spans, and measured centered single rows. General stacks, wrapping, distributed spacing, and robust sizing inference still need implementation and fixture coverage.
+The implementation now covers simple buttons, baseline text rows, padded badge spans, horizontal rows, vertical stacks, single-row and single-column grids, distributed space-between rows, wrapping rows, fill-width stack children, intrinsic width/height hints, and absolute overlays. Geometry checks preserve gaps, padding, and alignment before accepting a candidate. Existing Auto Layout is retained.
+
+Inference remains conservative. Arbitrary multi-column grids, overlapping compositions, rotated children, reverse ordering, uneven gaps, and uncertain line-box alignment may retain their original structure. Full responsive constraints cannot be inferred from one captured viewport. Live browser/Figma testing complements the geometry and native clipboard regression tests.
