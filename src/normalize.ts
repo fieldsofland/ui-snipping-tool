@@ -49,10 +49,23 @@ export function normalizeLayers(layers: Layer[], rootGuid: Guid, sources: Map<st
     if (root.transform) { root.transform.m02 = 0; root.transform.m12 = 0; }
     layers = layers.filter(node => node !== wrapper);
   }
+  const controlAncestor = (node: Layer) => {
+    let ancestor: Layer | undefined = node;
+    let inControl = false;
+    const visited = new Set<string>();
+    while (ancestor && !visited.has(key(ancestor.guid))) {
+      visited.add(key(ancestor.guid));
+      const ancestorSource = sources.get(key(ancestor.guid));
+      if (ancestorSource?.tag === 'button' || ancestorSource?.role === 'button') { inControl = true; break; }
+      ancestor = ancestor.parentIndex ? layers.find(layer => key(layer.guid) === key(ancestor!.parentIndex!.guid)) : undefined;
+    }
+    return inControl;
+  };
   for (const node of layers) {
     const source = sources.get(key(node.guid));
     if (!source) continue;
     if (node.type === 'TEXT') {
+      if (!source.multiline && (source.controlContent || controlAncestor(node))) node.textAlignVertical = 'CENTER';
       node.textAutoResize = source.multiline ? 'HEIGHT' : 'WIDTH_AND_HEIGHT';
       if (!source.multiline) {
         node.stackChildAlignSelf = 'AUTO';
@@ -65,7 +78,19 @@ export function normalizeLayers(layers: Layer[], rootGuid: Guid, sources: Map<st
     }
     if (node.type !== 'FRAME') continue;
     const direct = children(node.guid);
-    const inferred = inferAutoLayout(node, direct, source, sources);
+    let inferred = inferAutoLayout(node, direct, source, sources);
+    const inControl = controlAncestor(node);
+    if (!inferred && inControl && direct.length >= 2) {
+      // Trace ranges for mixed inline text can describe a different line box.
+      // A control-scoped second candidate uses the captured layer bounds.
+      const controlSources = new Map(sources);
+      for (const child of direct) {
+        const childSource = sources.get(key(child.guid));
+        if (childSource) controlSources.set(key(child.guid), { ...childSource, bounds: undefined });
+      }
+      inferred = inferAutoLayout(node, direct, { ...source, bounds: undefined, controlContent: true,
+        normalFlowChildren: direct.every(child => !['absolute', 'fixed'].includes(sources.get(key(child.guid))?.position ?? '')) }, controlSources);
+    }
     const textOnly = direct.length > 0 && direct.every(child => child.type === 'TEXT');
     node.name = layerName(source, textOnly);
     const normalFlow = direct.every(child => child.stackPositioning !== 'ABSOLUTE');

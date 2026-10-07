@@ -6,7 +6,7 @@ const uniform=(values:number[])=>values.every(value=>value>=-.01&&near(value,val
 // Geometry is the final check; CSS provides hints and identifies overlays.
 export function inferAutoLayout(parent:Layer, children:Layer[], source:Source, sources:Map<string,Source>):boolean {
   if (!parent.size || source.normalFlowChildren===undefined || parent.stackMode && parent.stackMode!=='NONE') return false;
-  if(source.alignItems==='baseline')return false;
+  if(source.alignItems==='baseline'&&!source.controlContent)return false;
   const overlays=children.filter(child=>['absolute','fixed'].includes(sources.get(key(child))?.position ?? ''));
   const flow=children.filter(child=>!overlays.includes(child));
   if(flow.length<2||flow.some(child=>!child.size||!child.transform||child.transform.m00!==1||child.transform.m11!==1||child.transform.m01!==0||child.transform.m10!==0))return false;

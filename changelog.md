@@ -2,6 +2,8 @@
 
 ## 2026-10-07
 
+- Added a control-ancestry fallback for mixed inline label/count rows whose trace bounds prevent layout inference. Vertically centered single-line control text to handle line heights larger than the captured glyph box. Verified real GitHub button rows paste with horizontal inner layouts and centered text properties.
+
 - Used measured browser bounds for layout inference so fallback font boxes do not prevent nested button rows from converting. Centered badge text vertically without squeezing it between CSS line-height-derived padding.
 
 - Added geometry-based Auto Layout inference for rows, stacks, simple grids, wrapping groups, distributed spacing, fill-width children, intrinsic sizing hints, and absolute overlays. Retained existing layouts and rejected ambiguous geometry. Added layout and native wrapping clipboard tests.

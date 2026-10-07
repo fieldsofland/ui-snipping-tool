@@ -133,3 +133,16 @@ test('badge centers its text independently of undersized CSS line height',()=>{
  normalizeLayers([badge,text],guid(2),new Map([['0:3',source({tag:'span',classes:['Counter'],padding:[3,7,3,7]})]]));
  assert.equal(text.textAlignVertical,'CENTER');assert.equal(badge.stackVerticalPadding,0);assert.equal(badge.stackPaddingBottom,0);
 });
+test('button ancestry supplies layout fallback when inline trace bounds are unsuitable',()=>{
+ const button=layer(3,2),row=layer(4,3),text=layer(5,4,'TEXT'),badge=layer(6,4);
+ row.size={x:52,y:19.5};text.size={x:26,y:14};text.transform.m02=0;text.transform.m12=2.5;badge.size={x:22,y:18};badge.transform.m02=30;badge.transform.m12=.5;
+ normalizeLayers([button,row,text,badge],guid(2),new Map([
+ ['0:3',source({tag:'button'})],['0:4',source({normalFlowChildren:false,alignItems:'baseline'})]
+ ]));
+ assert.equal(row.stackMode,'HORIZONTAL');assert.equal(row.stackCounterAlignItems,'CENTER');assert.equal(row.stackSpacing,4);
+});
+test('single-line button text centers glyphs within its captured line box',()=>{
+ const button=layer(3,2),text=layer(4,3,'TEXT');
+ normalizeLayers([button,text],guid(2),new Map([['0:3',source({tag:'button'})],['0:4',source({tag:'span'})]]));
+ assert.equal(text.textAlignVertical,'CENTER');assert.equal(text.textAutoResize,'WIDTH_AND_HEIGHT');
+});
