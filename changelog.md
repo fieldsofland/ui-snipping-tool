@@ -2,6 +2,8 @@
 
 ## 2026-10-07
 
+- Added Auto Layout to padded badge spans and simple centered inline icon/label/count rows, including content nested inside buttons. Preserved measured gaps and source height; excluded overlaps, transforms, and explicit CSS positioning.
+
 - Started clipboard writes immediately on the Copy click using a promised HTML payload, before asynchronous font/image preparation can lose browser activation or focus. Success still waits for the completed write; added ordering and failure regression tests.
 
 - Renamed the extension UI Snipping Tool. Verified existing outer and inset box-shadow conversion with regression coverage for multiple shadows, blur, spread, color alpha, and native clipboard encoding.

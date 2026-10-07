@@ -87,3 +87,24 @@ test('retains multi-child grouping and single text alignment wrappers',()=>{
   assert.equal(reduceWrappers([emptyWrapper(2,1),emptyWrapper(3,2),emptyWrapper(4,2)],new Map([['0:2',source({})]])).length,3);
   assert.equal(reduceWrappers([emptyWrapper(2,1),layer(3,2,'TEXT')],new Map([['0:2',source({})]])).length,2);
 });
+test('inline icon label and count rows become centered Auto Layout with measured gaps',()=>{
+  const row=layer(3,2),icon=layer(4,3),label=layer(5,3,'TEXT');
+  row.size={x:70,y:20};icon.size={x:16,y:16};label.size={x:50,y:20};
+  icon.transform.m02=0;icon.transform.m12=2;label.transform.m02=20;label.transform.m12=0;
+  icon.stackPositioning=label.stackPositioning='ABSOLUTE';
+  normalizeLayers([row,icon,label],guid(2),new Map([['0:3',source({display:'inline',normalFlowChildren:true})]]));
+  assert.equal(row.stackMode,'HORIZONTAL');assert.equal(row.stackSpacing,4);
+  assert.equal(row.stackCounterSizing,'FIXED');assert.equal(icon.stackPositioning,'AUTO');
+});
+test('padded counter span becomes Auto Layout while retaining its source dimensions',()=>{
+  const badge=layer(3,2),text=layer(4,3,'TEXT');text.stackPositioning='ABSOLUTE';
+  normalizeLayers([badge,text],guid(2),new Map([['0:3',source({tag:'span',classes:['Counter'],padding:[2,7,2,7],normalFlowChildren:true})]]));
+  assert.equal(badge.name,'badge');assert.equal(badge.stackMode,'HORIZONTAL');assert.equal(badge.stackCounterSizing,'FIXED');assert.equal(badge.stackHorizontalPadding,7);
+});
+test('overlapping and deliberately positioned content remains a regular frame',()=>{
+  for(const explicit of [true,false]){
+    const row=layer(3,2),a=layer(4,3),b=layer(5,3);a.size=b.size={x:20,y:20};a.transform.m02=0;b.transform.m02=explicit?24:10;
+    normalizeLayers([row,a,b],guid(2),new Map([['0:3',source({normalFlowChildren:!explicit})]]));
+    assert.equal(row.stackMode,'NONE');
+  }
+});

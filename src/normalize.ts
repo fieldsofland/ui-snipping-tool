@@ -17,10 +17,12 @@ export type Source = {
   tag: string; id: string; classes: string[]; role: string | null; display: string;
   alignItems: string; flexDirection: string; gap: number; textAlign: string;
   padding: [number, number, number, number]; multiline: boolean; semanticBoundary?: boolean; sizingBoundary?: boolean; clippingBoundary?: boolean;
+  normalFlowChildren?: boolean;
 };
 const key = (guid: Guid) => `${guid.sessionID}:${guid.localID}`;
 
 export function layerName(source: Source, textOnly: boolean): string {
+  if (source.classes.some(value => /(?:badge|counter|pill)/i.test(value))) return 'badge';
   if (source.tag === 'button' || source.role === 'button') return 'button';
   const semantic = [source.id, ...source.classes].find(value => /^(?:[a-z]+[-_])*(?:card|pricing|price|features|feature-list|header|footer|content|actions|navigation|nav|hero|description|title|subtitle|label|eyebrow)(?:[-_][a-z]+)*$/i.test(value));
   if (semantic) return semantic.toLowerCase().replaceAll('_', '-') + (semantic.endsWith('-container') ? '' : '-container');
@@ -61,14 +63,29 @@ export function normalizeLayers(layers: Layer[], rootGuid: Guid, sources: Map<st
     const normalFlow = direct.every(child => child.stackPositioning !== 'ABSOLUTE');
     const baselineRow = source.display.includes('flex') && source.flexDirection === 'row' && source.alignItems === 'baseline' && textOnly && normalFlow;
     const simpleButton = (source.tag === 'button' || source.role === 'button') && textOnly && normalFlow;
-    if (baselineRow || simpleButton) {
+    const badge = source.tag === 'span' && textOnly && direct.length === 1 && !source.multiline && (normalFlow || source.normalFlowChildren === true) && (source.padding.some(value => value > 0) || source.classes.some(value => /(?:badge|counter|pill)/i.test(value)));
+    // Inline spans often arrive as positioned frames despite forming a simple
+    // icon/label/count row. Infer only a single, evenly spaced centered row.
+    const measuredRow = source.normalFlowChildren === true && !source.display.includes('grid') && source.flexDirection !== 'column' && direct.length >= 2 && direct.every(child => child.size && child.transform && child.transform.m00 === 1 && child.transform.m11 === 1 && child.transform.m01 === 0 && child.transform.m10 === 0);
+    const centers = measuredRow ? direct.map(child => child.transform!.m12 + child.size!.y / 2) : [];
+    const gaps = measuredRow ? direct.slice(1).map((child, index) => child.transform!.m02 - direct[index].transform!.m02 - direct[index].size!.x) : [];
+    const inlineRow = measuredRow && Math.max(...centers) - Math.min(...centers) <= 1 && gaps.every(gap => gap >= 0 && gap <= 32 && Math.abs(gap - gaps[0]) <= .5);
+    if (baselineRow || simpleButton || badge || inlineRow) {
       node.stackMode = 'HORIZONTAL';
-      node.stackPrimarySizing = 'FIXED';
-      node.stackCounterSizing = 'RESIZE_TO_FIT';
+      node.stackPrimarySizing = inlineRow || badge ? 'RESIZE_TO_FIT' : 'FIXED';
+      node.stackCounterSizing = inlineRow || badge ? 'FIXED' : 'RESIZE_TO_FIT';
       node.stackPrimaryAlignItems = baselineRow ? 'MIN' : source.textAlign === 'left' ? 'MIN' : source.textAlign === 'right' ? 'MAX' : 'CENTER';
       node.stackCounterAlignItems = baselineRow ? 'BASELINE' : 'CENTER';
-      node.stackSpacing = source.gap;
+      node.stackSpacing = inlineRow ? gaps[0] : source.gap;
       [node.stackVerticalPadding, node.stackPaddingRight, node.stackPaddingBottom, node.stackHorizontalPadding] = source.padding;
+      if (inlineRow) {
+        node.stackHorizontalPadding = direct[0].transform!.m02;
+        node.stackPaddingRight = Math.max(0, (node.size?.x ?? 0) - direct.at(-1)!.transform!.m02 - direct.at(-1)!.size!.x);
+        const top = Math.min(...direct.map(child => child.transform!.m12));
+        const bottom = Math.max(...direct.map(child => child.transform!.m12 + child.size!.y));
+        node.stackVerticalPadding = Math.max(0, top);
+        node.stackPaddingBottom = Math.max(0, (node.size?.y ?? bottom) - bottom);
+      }
       for (const child of direct) {
         child.stackPositioning = 'AUTO';
         child.stackChildAlignSelf = 'AUTO';
@@ -154,6 +171,7 @@ export function normalizeCapture(result: ConvertResult, root: Element) {
       gap: number(style.columnGap), textAlign: style.textAlign,
       padding: [number(style.paddingTop) + number(style.borderTopWidth), number(style.paddingRight) + number(style.borderRightWidth), number(style.paddingBottom) + number(style.borderBottomWidth), number(style.paddingLeft) + number(style.borderLeftWidth)],
       multiline,
+      normalFlowChildren: [...element.children].every(child => { const childStyle = getComputedStyle(child); return !['absolute', 'fixed'].includes(childStyle.position) && childStyle.transform === 'none'; }),
       sizingBoundary: !['0px', 'auto', ''].includes(style.minWidth) || !['0px', 'auto', ''].includes(style.minHeight) || !['none', ''].includes(style.maxWidth) || !['none', ''].includes(style.maxHeight),
       clippingBoundary: [style.overflowX, style.overflowY].some(value => value !== 'visible') || style.clipPath !== 'none',
       semanticBoundary: element.hasAttribute('aria-label') || [element.id, ...element.classList].some(value => /(?:^|[-_])(card|button|dialog|modal|navigation|hero)(?:$|[-_])/i.test(value)),
