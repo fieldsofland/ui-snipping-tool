@@ -2,6 +2,8 @@
 
 ## 2026-10-07
 
+- Corrected cached glyph and baseline positions for single-line controls whose CSS line height exceeds the captured text-box height. Verified the actual GitHub Pin/Watch/Fork/Star row visually in Figma, with centered labels and counters and horizontal inner layouts, without manual typography edits.
+
 - Added a control-ancestry fallback for mixed inline label/count rows whose trace bounds prevent layout inference. Vertically centered single-line control text to handle line heights larger than the captured glyph box. Verified real GitHub button rows paste with horizontal inner layouts and centered text properties.
 
 - Used measured browser bounds for layout inference so fallback font boxes do not prevent nested button rows from converting. Centered badge text vertically without squeezing it between CSS line-height-derived padding.

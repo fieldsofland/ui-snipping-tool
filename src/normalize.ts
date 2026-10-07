@@ -15,6 +15,8 @@ export type Layer = {
   stackHorizontalPadding?: number; stackVerticalPadding?: number; stackPaddingRight?: number; stackPaddingBottom?: number;
   stackWrap?: string; stackCounterSpacing?: number;
   textAlignVertical?: string;
+  lineHeight?: {value:number; units:string};
+  derivedTextData?: {glyphs?: {position?:{x:number;y:number}}[];baselines?: {position?:{x:number;y:number}}[]};
 };
 export type Source = {
   tag: string; id: string; classes: string[]; role: string | null; display: string;
@@ -65,7 +67,17 @@ export function normalizeLayers(layers: Layer[], rootGuid: Guid, sources: Map<st
     const source = sources.get(key(node.guid));
     if (!source) continue;
     if (node.type === 'TEXT') {
-      if (!source.multiline && (source.controlContent || controlAncestor(node))) node.textAlignVertical = 'CENTER';
+      if (!source.multiline && (source.controlContent || controlAncestor(node))) {
+        node.textAlignVertical = 'CENTER';
+        // Cached glyphs use CSS line-height while the captured text box can
+        // use the smaller browser glyph bounds. Figma keeps those positions
+        // on initial paste even after Auto Layout centers the text box.
+        const leading = node.lineHeight?.units === 'PIXELS' && node.size ? (node.lineHeight.value - node.size.y) / 2 : 0;
+        if (leading > 0 && node.derivedTextData?.baselines?.length === 1) {
+          for (const glyph of node.derivedTextData.glyphs ?? []) if (glyph.position) glyph.position.y -= leading;
+          for (const baseline of node.derivedTextData.baselines) if (baseline.position) baseline.position.y -= leading;
+        }
+      }
       node.textAutoResize = source.multiline ? 'HEIGHT' : 'WIDTH_AND_HEIGHT';
       if (!source.multiline) {
         node.stackChildAlignSelf = 'AUTO';

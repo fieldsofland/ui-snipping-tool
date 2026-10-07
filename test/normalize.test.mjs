@@ -146,3 +146,10 @@ test('single-line button text centers glyphs within its captured line box',()=>{
  normalizeLayers([button,text],guid(2),new Map([['0:3',source({tag:'button'})],['0:4',source({tag:'span'})]]));
  assert.equal(text.textAlignVertical,'CENTER');assert.equal(text.textAutoResize,'WIDTH_AND_HEIGHT');
 });
+test('control cached glyphs lose excess line-box leading without removing glyph data',()=>{
+ const button=layer(3,2),text=layer(4,3,'TEXT');text.size={x:26,y:14};text.lineHeight={units:'PIXELS',value:19.5};
+ text.derivedTextData={glyphs:[{position:{x:0,y:13}}],baselines:[{position:{x:0,y:13}}]};
+ normalizeLayers([button,text],guid(2),new Map([['0:3',source({tag:'button'})],['0:4',source({tag:'span'})]]));
+ assert.equal(text.derivedTextData.glyphs[0].position.y,10.25);assert.equal(text.derivedTextData.baselines[0].position.y,10.25);
+ assert.equal(text.lineHeight.value,19.5);assert.equal(text.derivedTextData.glyphs.length,1);
+});
