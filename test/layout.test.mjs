@@ -42,3 +42,10 @@ test('existing Auto Layout and multiline text widths remain intact',()=>{
  inferAutoLayout(p,[a,b],source(),new Map());assert.equal(a.size.x,184);assert.equal(a.textAutoResize,'HEIGHT');
  const spacing=p.stackSpacing;assert.equal(inferAutoLayout(p,[a,b],source(),new Map()),false);assert.equal(p.stackSpacing,spacing);
 });
+test('button layout uses browser text bounds instead of fallback font glyph sizes',()=>{
+ const p=node(3,0,0,52,19.5),label=node(4,0,2.5,34,24),count=node(5,30,.5,22,18);
+ assert.equal(inferAutoLayout(p,[label,count],source({controlContent:true,bounds:{x:100,y:200,w:52,h:19.5}}),new Map([
+ ['0:4',{bounds:{x:100,y:202.5,w:26,h:14}}],['0:5',{bounds:{x:130,y:200.5,w:22,h:18}}]
+ ])),true);
+ assert.equal(p.stackMode,'HORIZONTAL');assert.equal(p.stackSpacing,4);assert.equal(p.stackCounterAlignItems,'CENTER');
+});

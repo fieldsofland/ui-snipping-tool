@@ -11,10 +11,14 @@ export function inferAutoLayout(parent:Layer, children:Layer[], source:Source, s
   const flow=children.filter(child=>!overlays.includes(child));
   if(flow.length<2||flow.some(child=>!child.size||!child.transform||child.transform.m00!==1||child.transform.m11!==1||child.transform.m01!==0||child.transform.m10!==0))return false;
   if(source.normalFlowChildren===false && overlays.length===0)return false;
-  const boxes=flow.map(child=>({x:child.transform!.m02,y:child.transform!.m12,w:child.size!.x,h:child.size!.y}));
+  const boxes=flow.map(child=>{
+    const measured=sources.get(key(child))?.bounds;
+    return measured&&source.bounds?{x:measured.x-source.bounds.x,y:measured.y-source.bounds.y,w:measured.w,h:measured.h}:{x:child.transform!.m02,y:child.transform!.m12,w:child.size!.x,h:child.size!.y};
+  });
   if(boxes.some(b=>b.x<-.01||b.y<-.01||b.x+b.w>parent.size!.x+3||b.y+b.h>parent.size!.y+3))return false;
   const aligned=(horizontal:boolean)=>{
     const starts=boxes.map(b=>horizontal?b.y:b.x),ends=boxes.map(b=>horizontal?b.y+b.h:b.x+b.w),centers=starts.map((s,i)=>(s+ends[i])/2);
+    if(horizontal&&source.controlContent&&Math.max(...starts)<Math.min(...ends))return 'CENTER';
     if(centers.every(c=>Math.abs(c-centers[0])<=3))return 'CENTER';
     if(starts.every(s=>near(s,starts[0])))return 'MIN';
     if(ends.every(e=>near(e,ends[0])))return 'MAX';
@@ -40,7 +44,7 @@ export function inferAutoLayout(parent:Layer, children:Layer[], source:Source, s
     if(boxes.some(b=>{
       const start=horizontal?b.y:b.x,size=horizontal?b.h:b.w;
       const expected=align==='MIN'?crossStart:align==='MAX'?crossEnd-size:(crossStart+crossEnd-size)/2;
-      return Math.abs(start-expected)>3;
+      return Math.abs(start-expected)>(horizontal&&source.controlContent?Math.max(...boxes.map(b=>b.h))/2:3);
     }))continue;
     Object.assign(parent,{stackMode:horizontal?'HORIZONTAL':'VERTICAL',stackSpacing:Math.max(0,gaps[0]),stackPrimaryAlignItems:distributed?'SPACE_BETWEEN':'MIN',stackCounterAlignItems:align,
       stackPrimarySizing:horizontal&&source.intrinsicWidth||!horizontal&&source.intrinsicHeight?'RESIZE_TO_FIT':'FIXED',stackCounterSizing:'FIXED',

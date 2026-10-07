@@ -128,3 +128,8 @@ test('single-column grids become vertical rather than horizontal Auto Layout',()
   normalizeLayers([grid,a,b],guid(2),new Map([['0:3',source({display:'grid',normalFlowChildren:true})]]));
   assert.equal(grid.stackMode,'VERTICAL');
 });
+test('badge centers its text independently of undersized CSS line height',()=>{
+ const badge=layer(3,2),text=layer(4,3,'TEXT');badge.size={x:22,y:18};
+ normalizeLayers([badge,text],guid(2),new Map([['0:3',source({tag:'span',classes:['Counter'],padding:[3,7,3,7]})]]));
+ assert.equal(text.textAlignVertical,'CENTER');assert.equal(badge.stackVerticalPadding,0);assert.equal(badge.stackPaddingBottom,0);
+});

@@ -2,6 +2,8 @@
 
 ## 2026-10-07
 
+- Used measured browser bounds for layout inference so fallback font boxes do not prevent nested button rows from converting. Centered badge text vertically without squeezing it between CSS line-height-derived padding.
+
 - Added geometry-based Auto Layout inference for rows, stacks, simple grids, wrapping groups, distributed spacing, fill-width children, intrinsic sizing hints, and absolute overlays. Retained existing layouts and rejected ambiguous geometry. Added layout and native wrapping clipboard tests.
 
 - Corrected button-row detection to include single-row CSS grids used by GitHub and tolerate inline text line-box offsets. Added GitHub-style button regression fixture and kept multi-row grids excluded.

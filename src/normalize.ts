@@ -14,6 +14,7 @@ export type Layer = {
   stackChildAlignSelf?: string; stackChildPrimaryGrow?: number; stackPositioning?: string;
   stackHorizontalPadding?: number; stackVerticalPadding?: number; stackPaddingRight?: number; stackPaddingBottom?: number;
   stackWrap?: string; stackCounterSpacing?: number;
+  textAlignVertical?: string;
 };
 export type Source = {
   tag: string; id: string; classes: string[]; role: string | null; display: string;
@@ -22,6 +23,8 @@ export type Source = {
   normalFlowChildren?: boolean;
   position?: string; flexGrow?: number; flexWrap?: string; rowGap?: number; justifyContent?: string;
   intrinsicWidth?: boolean; intrinsicHeight?: boolean;
+  controlContent?: boolean;
+  bounds?: {x:number; y:number; w:number; h:number};
 };
 const key = (guid: Guid) => `${guid.sessionID}:${guid.localID}`;
 
@@ -95,7 +98,9 @@ export function normalizeLayers(layers: Layer[], rootGuid: Guid, sources: Map<st
         child.stackPositioning = 'AUTO';
         child.stackChildAlignSelf = 'AUTO';
         child.stackChildPrimaryGrow = 0;
+        if (badge && child.type === 'TEXT') child.textAlignVertical = 'CENTER';
       }
+      if (badge) { node.stackVerticalPadding = 0; node.stackPaddingBottom = 0; }
     }
   }
   return reduceWrappers(layers, sources);
@@ -170,6 +175,7 @@ export function normalizeCapture(result: ConvertResult, root: Element) {
     // Text fragments at different vertical positions indicate actual browser wrapping.
     const multiline = rects.some(rect => Math.abs(rect.top - (rects[0]?.top ?? rect.top)) > rect.height * .5);
     const number = (value: string) => Number.parseFloat(value) || 0;
+    const bounds = textNode ? range.getBoundingClientRect() : element.getBoundingClientRect();
     sources.set(key(entry.guid), {
       tag: element.tagName.toLowerCase(), id: element.id, classes: [...element.classList], role: element.getAttribute('role'),
       display: style.display, alignItems: style.alignItems, flexDirection: style.flexDirection,
@@ -178,6 +184,8 @@ export function normalizeCapture(result: ConvertResult, root: Element) {
       multiline,
       normalFlowChildren: [...element.children].every(child => { const childStyle = getComputedStyle(child); return !['absolute', 'fixed'].includes(childStyle.position) && childStyle.transform === 'none'; }),
       position: style.position, flexGrow: number(style.flexGrow), flexWrap: style.flexWrap, rowGap: number(style.rowGap), justifyContent: style.justifyContent,
+      controlContent: !!element.closest('button, [role="button"], a.Button'),
+      bounds: { x:bounds.left, y:bounds.top, w:bounds.width, h:bounds.height },
       intrinsicWidth: ['inline', 'inline-block', 'inline-flex', 'inline-grid'].includes(style.display) && !(element as HTMLElement).style?.width,
       intrinsicHeight: !(element as HTMLElement).style?.height && !(element as HTMLElement).style?.minHeight,
       sizingBoundary: !['0px', 'auto', ''].includes(style.minWidth) || !['0px', 'auto', ''].includes(style.minHeight) || !['none', ''].includes(style.maxWidth) || !['none', ''].includes(style.maxHeight),
