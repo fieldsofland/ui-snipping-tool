@@ -108,3 +108,23 @@ test('overlapping and deliberately positioned content remains a regular frame',(
     assert.equal(row.stackMode,'NONE');
   }
 });
+test('GitHub single-row grid contents and inline label/count line boxes become centered Auto Layout',()=>{
+  const grid=layer(3,2),icon=layer(4,3),labelRow=layer(5,3),text=layer(6,5,'TEXT'),count=layer(7,5);
+  grid.size={x:71.71,y:19.5};icon.size={x:16,y:16};labelRow.size={x:51.71,y:19.5};
+  icon.transform.m02=0;icon.transform.m12=1.75;labelRow.transform.m02=20;labelRow.transform.m12=0;
+  text.size={x:25.71,y:19.5};text.transform.m02=0;text.transform.m12=2.5;
+  count.size={x:22,y:18};count.transform.m02=29.71;count.transform.m12=.5;
+  normalizeLayers([grid,icon,labelRow,text,count],guid(2),new Map([
+    ['0:3',source({display:'grid',normalFlowChildren:true})],
+    ['0:5',source({display:'inline',normalFlowChildren:true})]
+  ]));
+  assert.equal(grid.stackMode,'HORIZONTAL');assert.equal(labelRow.stackMode,'HORIZONTAL');
+  assert.equal(grid.stackCounterAlignItems,'CENTER');assert.equal(labelRow.stackCounterAlignItems,'CENTER');
+  assert.ok(Math.abs(labelRow.stackSpacing-4)<1e-8);
+});
+test('multi-row grids are not flattened to horizontal Auto Layout',()=>{
+  const grid=layer(3,2),a=layer(4,3),b=layer(5,3);
+  a.size=b.size={x:16,y:16};a.transform.m12=0;b.transform.m12=24;
+  normalizeLayers([grid,a,b],guid(2),new Map([['0:3',source({display:'grid',normalFlowChildren:true})]]));
+  assert.equal(grid.stackMode,'NONE');
+});

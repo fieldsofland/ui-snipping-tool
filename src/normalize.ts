@@ -66,10 +66,10 @@ export function normalizeLayers(layers: Layer[], rootGuid: Guid, sources: Map<st
     const badge = source.tag === 'span' && textOnly && direct.length === 1 && !source.multiline && (normalFlow || source.normalFlowChildren === true) && (source.padding.some(value => value > 0) || source.classes.some(value => /(?:badge|counter|pill)/i.test(value)));
     // Inline spans often arrive as positioned frames despite forming a simple
     // icon/label/count row. Infer only a single, evenly spaced centered row.
-    const measuredRow = source.normalFlowChildren === true && !source.display.includes('grid') && source.flexDirection !== 'column' && direct.length >= 2 && direct.every(child => child.size && child.transform && child.transform.m00 === 1 && child.transform.m11 === 1 && child.transform.m01 === 0 && child.transform.m10 === 0);
+    const measuredRow = source.normalFlowChildren === true && !(source.display.includes('flex') && source.flexDirection === 'column') && direct.length >= 2 && direct.every(child => child.size && child.transform && child.transform.m00 === 1 && child.transform.m11 === 1 && child.transform.m01 === 0 && child.transform.m10 === 0);
     const centers = measuredRow ? direct.map(child => child.transform!.m12 + child.size!.y / 2) : [];
     const gaps = measuredRow ? direct.slice(1).map((child, index) => child.transform!.m02 - direct[index].transform!.m02 - direct[index].size!.x) : [];
-    const inlineRow = measuredRow && Math.max(...centers) - Math.min(...centers) <= 1 && gaps.every(gap => gap >= 0 && gap <= 32 && Math.abs(gap - gaps[0]) <= .5);
+    const inlineRow = measuredRow && Math.max(...centers) - Math.min(...centers) <= 3 && gaps.every(gap => gap >= 0 && gap <= 32 && Math.abs(gap - gaps[0]) <= .5);
     if (baselineRow || simpleButton || badge || inlineRow) {
       node.stackMode = 'HORIZONTAL';
       node.stackPrimarySizing = inlineRow || badge ? 'RESIZE_TO_FIT' : 'FIXED';
